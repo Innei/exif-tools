@@ -31,6 +31,7 @@ export const Component = () => {
     any
   > | null>(null)
   const [removeGps, setRemoveGps] = useState(true)
+  const [useOriginalFilename, setUseOriginalFilename] = useState(false)
 
   const handleSourceImageChange = (file: File) => {
     setSourceImage({ file, previewUrl: URL.createObjectURL(file) })
@@ -58,6 +59,11 @@ export const Component = () => {
 
     if (removeGps) {
       exifObj.GPS = {}
+    }
+
+    // Reset orientation to normal since the target image is already correctly oriented when drawn to canvas
+    if (exifObj['0th']) {
+      exifObj['0th'][274] = 1 // 274 is the EXIF tag code for Orientation
     }
     const exifStr = piexif.dump(exifObj)
 
@@ -105,16 +111,21 @@ export const Component = () => {
     readerTarget.readAsDataURL(targetImage.file!)
   }
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!newImageUrl) {
       toast.error('No new image to download.', {
         description: 'Please transfer EXIF data first.',
       })
       return
     }
+
+    const filename = useOriginalFilename
+      ? targetImage?.file?.name || 'image.jpg'
+      : `processed-${targetImage?.file?.name || 'image.jpg'}`
+
     const link = document.createElement('a')
     link.href = newImageUrl
-    link.download = `processed-${targetImage?.file?.name || 'image.jpg'}`
+    link.download = filename
     document.body.append(link)
     link.click()
     link.remove()
@@ -148,18 +159,35 @@ export const Component = () => {
           />
         </div>
         <div className="flex flex-col items-center justify-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="remove-gps"
-              checked={removeGps}
-              onCheckedChange={(checked) => setRemoveGps(checked === true)}
-            />
-            <label
-              htmlFor="remove-gps"
-              className="text-sm font-medium leading-none cursor-pointer select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Remove GPS information
-            </label>
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remove-gps"
+                checked={removeGps}
+                onCheckedChange={(checked) => setRemoveGps(checked === true)}
+              />
+              <label
+                htmlFor="remove-gps"
+                className="text-sm font-medium leading-none cursor-pointer select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Remove GPS information
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="use-original-filename"
+                checked={useOriginalFilename}
+                onCheckedChange={(checked) =>
+                  setUseOriginalFilename(checked === true)
+                }
+              />
+              <label
+                htmlFor="use-original-filename"
+                className="text-sm font-medium leading-none cursor-pointer select-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Use original filename for download
+              </label>
+            </div>
           </div>
           <div className="flex justify-center space-x-4">
             <Button onClick={handleTransfer}>Transfer EXIF</Button>
