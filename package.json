@@ -52,7 +52,7 @@
     "usehooks-ts": "3.1.1"
   },
   "devDependencies": {
-    "@egoist/tailwindcss-icons": "1.9.0",
+    "@egoist/tailwindcss-icons": "1.9.2",
     "@iconify-json/mingcute": "1.2.3",
     "@innei/prettier": "^0.15.0",
     "@tailwindcss/container-queries": "0.1.1",
